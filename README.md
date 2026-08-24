@@ -4,7 +4,7 @@ OpenPath AI helps a developer evaluate an open-source GitHub repository, find a 
 
 ## Phase 1 status
 
-The FastAPI application foundation and health endpoint are implemented. The Angular status page is pending installation of Node.js LTS.
+The FastAPI application foundation, health endpoint, and Angular connection-status page are implemented.
 
 ## Backend quick start
 
@@ -39,6 +39,25 @@ Run tests:
 python -m unittest discover -s .\apps\api\tests -p "test_*.py" -v
 ```
 
+## Frontend quick start
+
+Start FastAPI first, then open a second PowerShell terminal:
+
+```powershell
+Set-Location .\apps\web
+npm.cmd start
+```
+
+Open <http://localhost:4200>. Angular calls `/api/v1/health`; the development proxy forwards that request to FastAPI on port 8000.
+
+Run frontend checks:
+
+```powershell
+Set-Location .\apps\web
+npm.cmd test -- --watch=false
+npm.cmd run build
+```
+
 ## Request flow
 
 ```text
@@ -50,4 +69,3 @@ HTTP GET /api/v1/health
 ```
 
 The separation is intentional: the router handles HTTP, the service owns application logic, and the schema defines the public contract.
-
