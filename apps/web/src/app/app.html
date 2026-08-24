@@ -1,0 +1,60 @@
+<main class="shell">
+  <section class="hero" aria-labelledby="page-title">
+    <p class="eyebrow">Open-source contribution intelligence</p>
+    <h1 id="page-title">OpenPath AI</h1>
+    <p class="summary">
+      Find a healthy repository, choose work that matches your skills, and investigate an issue
+      using traceable evidence.
+    </p>
+  </section>
+
+  <section class="status-panel" aria-labelledby="status-title" aria-live="polite">
+    <div>
+      <p class="eyebrow">Phase 1 · system connection</p>
+      <h2 id="status-title">Frontend → backend health check</h2>
+    </div>
+
+    @switch (connectionState()) {
+      @case ('checking') {
+        <div class="status status--checking" role="status">
+          <span class="status__marker" aria-hidden="true"></span>
+          <div>
+            <strong>Checking the API…</strong>
+            <p>Angular is requesting <code>/api/v1/health</code>.</p>
+          </div>
+        </div>
+      }
+      @case ('connected') {
+        <div class="status status--connected" role="status">
+          <span class="status__marker" aria-hidden="true"></span>
+          <div>
+            <strong>Backend connected</strong>
+            <p>{{ health()?.service }} version {{ health()?.version }}</p>
+          </div>
+        </div>
+
+        <dl class="details">
+          <div>
+            <dt>Status</dt>
+            <dd>{{ health()?.status }}</dd>
+          </div>
+          <div>
+            <dt>Environment</dt>
+            <dd>{{ health()?.environment }}</dd>
+          </div>
+        </dl>
+      }
+      @case ('unavailable') {
+        <div class="status status--unavailable" role="alert">
+          <span class="status__marker" aria-hidden="true"></span>
+          <div>
+            <strong>Backend unavailable</strong>
+            <p>{{ errorMessage() }}</p>
+          </div>
+        </div>
+
+        <button type="button" (click)="checkConnection()">Try again</button>
+      }
+    }
+  </section>
+</main>

@@ -17,6 +17,7 @@ dist/
 # Angular / Node
 node_modules/
 .angular/
+.npm-cache/
 coverage/
 
 # Editors and operating systems
@@ -32,4 +33,3 @@ logs/
 tmp/
 *.db
 *.sqlite
-
