@@ -1,0 +1,89 @@
+<section class="repository-panel" aria-labelledby="repository-title">
+  <p class="section-label">Phase 2 · repository preview</p>
+  <h2 id="repository-title">Inspect a public GitHub repository</h2>
+  <p class="section-copy">
+    Paste the repository homepage—not an issue, pull request, or source-file URL.
+  </p>
+
+  <form (ngSubmit)="submit()" novalidate>
+    <label for="repository-url">GitHub repository URL</label>
+    <div class="input-row">
+      <input
+        id="repository-url"
+        type="url"
+        autocomplete="url"
+        placeholder="https://github.com/angular/angular"
+        [formControl]="repositoryUrl"
+        [attr.aria-invalid]="repositoryUrl.invalid && repositoryUrl.touched"
+        aria-describedby="repository-guidance repository-error"
+      />
+      <button type="submit" [disabled]="state() === 'loading'">
+        {{ state() === 'loading' ? 'Inspecting…' : 'Inspect repository' }}
+      </button>
+    </div>
+    <p id="repository-guidance" class="guidance">
+      Only public github.com repositories are supported.
+    </p>
+    @if (repositoryUrl.invalid && repositoryUrl.touched) {
+      <p id="repository-error" class="validation" role="alert">
+        Enter a URL in the form https://github.com/owner/repository.
+      </p>
+    }
+  </form>
+
+  @if (state() === 'loading') {
+    <div class="feedback" role="status">Retrieving public repository metadata…</div>
+  }
+
+  @if (state() === 'error') {
+    <div class="feedback feedback--error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (repository(); as result) {
+    <article class="repository-result" aria-labelledby="result-title">
+      <div class="result-heading">
+        <div>
+          <p class="section-label">Repository found</p>
+          <h3 id="result-title">{{ result.full_name }}</h3>
+        </div>
+        <a [href]="result.html_url" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+      </div>
+
+      <p>{{ result.description || 'No repository description is available.' }}</p>
+
+      <dl class="repository-facts">
+        <div>
+          <dt>Language</dt>
+          <dd>{{ result.primary_language || 'Not detected' }}</dd>
+        </div>
+        <div>
+          <dt>Stars</dt>
+          <dd>{{ result.stars }}</dd>
+        </div>
+        <div>
+          <dt>Forks</dt>
+          <dd>{{ result.forks }}</dd>
+        </div>
+        <div>
+          <dt>Default branch</dt>
+          <dd>{{ result.default_branch }}</dd>
+        </div>
+        <div>
+          <dt>License</dt>
+          <dd>{{ result.license_spdx || 'Not declared' }}</dd>
+        </div>
+        <div>
+          <dt>Visibility</dt>
+          <dd>{{ result.visibility }}</dd>
+        </div>
+      </dl>
+
+      @if (result.archived || result.disabled) {
+        <p class="warning" role="note">
+          This repository is {{ result.archived ? 'archived' : 'disabled' }} and may not accept
+          contributions.
+        </p>
+      }
+    </article>
+  }
+</section>

@@ -6,6 +6,8 @@ OpenPath AI helps a developer evaluate an open-source GitHub repository, find a 
 
 The FastAPI application foundation, health endpoint, and Angular connection-status page are implemented.
 
+Phase 2 adds a secure public GitHub repository preview. The browser sends a repository URL to FastAPI; FastAPI validates it, calls only `api.github.com`, and returns a small typed response.
+
 ## Backend quick start
 
 Create and activate a virtual environment:
@@ -49,6 +51,8 @@ npm.cmd start
 ```
 
 Open <http://localhost:4200>. Angular calls `/api/v1/health`; the development proxy forwards that request to FastAPI on port 8000.
+
+Enter a URL such as `https://github.com/cheerstopriya/OpenPathAI` to exercise the repository-preview flow.
 
 Run frontend checks:
 
