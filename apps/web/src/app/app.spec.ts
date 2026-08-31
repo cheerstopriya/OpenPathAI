@@ -3,6 +3,7 @@ import { Observable, of, throwError } from 'rxjs';
 
 import { App } from './app';
 import { HealthApiService, HealthResponse } from './core/api/health-api.service';
+import { RepositoryApiService } from './core/api/repository-api.service';
 
 describe('App', () => {
   const health: HealthResponse = {
@@ -19,6 +20,10 @@ describe('App', () => {
         {
           provide: HealthApiService,
           useValue: { getHealth: () => response },
+        },
+        {
+          provide: RepositoryApiService,
+          useValue: { preview: () => throwError(() => new Error('not called')) },
         },
       ],
     }).compileComponents();

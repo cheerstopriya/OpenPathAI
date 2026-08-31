@@ -2,10 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { timeout } from 'rxjs';
 
 import { HealthApiService, HealthResponse } from './core/api/health-api.service';
+import { RepositoryPreviewComponent } from './features/repository-preview/repository-preview';
 
 type ConnectionState = 'checking' | 'connected' | 'unavailable';
 
 @Component({
+  imports: [RepositoryPreviewComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
