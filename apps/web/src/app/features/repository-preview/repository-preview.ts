@@ -5,6 +5,7 @@ import { forkJoin, timeout } from 'rxjs';
 
 import {
   RepositoryApiService,
+  OpportunityList,
   RepositoryPreview,
   RepositoryReadiness,
 } from '../../core/api/repository-api.service';
@@ -31,6 +32,7 @@ export class RepositoryPreviewComponent {
   protected readonly state = signal<PreviewState>('idle');
   protected readonly repository = signal<RepositoryPreview | null>(null);
   protected readonly readiness = signal<RepositoryReadiness | null>(null);
+  protected readonly opportunities = signal<OpportunityList | null>(null);
   protected readonly errorMessage = signal('');
 
   submit(event?: Event): void {
@@ -43,18 +45,21 @@ export class RepositoryPreviewComponent {
     this.state.set('loading');
     this.repository.set(null);
     this.readiness.set(null);
+    this.opportunities.set(null);
     this.errorMessage.set('');
 
     const repositoryUrl = this.repositoryUrl.value.trim();
     forkJoin({
       repository: this.repositoryApi.preview(repositoryUrl),
       readiness: this.repositoryApi.analyzeReadiness(repositoryUrl),
+      opportunities: this.repositoryApi.findOpportunities(repositoryUrl),
     })
       .pipe(timeout(20_000))
       .subscribe({
-        next: ({ repository, readiness }) => {
+        next: ({ repository, readiness, opportunities }) => {
           this.repository.set(repository);
           this.readiness.set(readiness);
+          this.opportunities.set(opportunities);
           this.state.set('success');
         },
         error: (error: unknown) => {

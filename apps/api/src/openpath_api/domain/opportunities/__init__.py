@@ -1,0 +1,1 @@
+"""Contribution opportunity ranking domain."""

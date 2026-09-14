@@ -151,4 +151,37 @@
       </div>
     </section>
   }
+
+  @if (opportunities(); as result) {
+    <section class="opportunity-result" aria-labelledby="opportunity-title">
+      <p class="section-label">Contribution opportunities</p>
+      <h3 id="opportunity-title">Recommended unassigned issues</h3>
+      <p class="dimension-meta">
+        Ranked from {{ result.sample_size }} sampled GitHub issue results.
+      </p>
+      @if (result.warning) {
+        <p class="warning" role="note">{{ result.warning }}</p>
+      }
+      <div class="opportunity-grid">
+        @for (opportunity of result.opportunities; track opportunity.number) {
+          <article class="opportunity-card">
+            <div class="dimension-heading">
+              <h4>#{{ opportunity.number }} · {{ opportunity.title }}</h4>
+              <strong>{{ opportunity.fit_score }}</strong>
+            </div>
+            <p class="dimension-meta">Contribution fit score</p>
+            <p class="labels">{{ opportunity.labels.join(' · ') || 'No labels' }}</p>
+            <ul>
+              @for (reason of opportunity.reasons; track reason) {
+                <li>{{ reason }}</li>
+              }
+            </ul>
+            <a [href]="opportunity.html_url" target="_blank" rel="noopener noreferrer"
+              >Open issue on GitHub</a
+            >
+          </article>
+        }
+      </div>
+    </section>
+  }
 </section>

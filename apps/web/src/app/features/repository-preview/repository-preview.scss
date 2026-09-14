@@ -120,6 +120,31 @@ button:disabled {
   border-top: 1px solid #dce2ee;
 }
 
+.opportunity-result {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dce2ee;
+}
+.opportunity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+.opportunity-card {
+  padding: 1rem;
+  border: 1px solid #e1e6ef;
+  border-radius: 0.75rem;
+  background: #fbfcff;
+}
+.opportunity-card a {
+  color: #2947be;
+  font-weight: 700;
+}
+.labels {
+  color: #58667e;
+  font-size: 0.85rem;
+}
+
 .score-summary {
   display: flex;
   gap: 1rem;
@@ -225,7 +250,8 @@ dd {
 @media (max-width: 42rem) {
   .input-row,
   .repository-facts,
-  .dimension-grid {
+  .dimension-grid,
+  .opportunity-grid {
     grid-template-columns: 1fr;
   }
 

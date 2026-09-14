@@ -5,6 +5,7 @@ import {
   RepositoryApiService,
   RepositoryPreview,
   RepositoryReadiness,
+  OpportunityList,
 } from '../../core/api/repository-api.service';
 import { RepositoryPreviewComponent } from './repository-preview';
 
@@ -52,6 +53,22 @@ describe('RepositoryPreviewComponent', () => {
     ],
     warnings: [],
   };
+  const opportunities: OpportunityList = {
+    repository_full_name: 'angular/angular',
+    sample_size: 30,
+    warning: null,
+    opportunities: [
+      {
+        number: 1,
+        title: 'Improve documentation',
+        html_url: 'https://github.com/angular/angular/issues/1',
+        labels: ['good first issue'],
+        updated_at: '2026-09-01T00:00:00Z',
+        fit_score: 100,
+        reasons: ['Unassigned, so it is more likely to be available.'],
+      },
+    ],
+  };
 
   beforeEach(async () => {
     previewCalls = [];
@@ -66,6 +83,7 @@ describe('RepositoryPreviewComponent', () => {
               return of(repository);
             },
             analyzeReadiness: () => of(readiness),
+            findOpportunities: () => of(opportunities),
           },
         },
       ],
@@ -95,6 +113,7 @@ describe('RepositoryPreviewComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('TypeScript');
     expect(fixture.nativeElement.textContent).toContain('82/100');
     expect(fixture.nativeElement.textContent).toContain('Maintenance activity');
+    expect(fixture.nativeElement.textContent).toContain('Improve documentation');
   });
 
   it('prevents native browser navigation when the form is submitted', () => {
