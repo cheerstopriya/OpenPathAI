@@ -2,7 +2,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { RepositoryApiService, RepositoryPreview } from './repository-api.service';
+import {
+  RepositoryApiService,
+  RepositoryPreview,
+  RepositoryReadiness,
+} from './repository-api.service';
 
 describe('RepositoryApiService', () => {
   let service: RepositoryApiService;
@@ -29,6 +33,20 @@ describe('RepositoryApiService', () => {
     expect(request.request.body).toEqual({ repository_url: repositoryUrl });
     request.flush(expected);
   });
+
+  it('posts the repository URL to the readiness endpoint', () => {
+    const repositoryUrl = 'https://github.com/angular/angular';
+    const expected = createReadiness();
+
+    service
+      .analyzeReadiness(repositoryUrl)
+      .subscribe((response) => expect(response).toEqual(expected));
+
+    const request = httpTesting.expectOne('/api/v1/repositories/readiness');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ repository_url: repositoryUrl });
+    request.flush(expected);
+  });
 });
 
 function createRepositoryPreview(): RepositoryPreview {
@@ -48,5 +66,19 @@ function createRepositoryPreview(): RepositoryPreview {
     topics: ['typescript'],
     license_spdx: 'MIT',
     pushed_at: '2026-08-20T10:00:00Z',
+  };
+}
+
+function createReadiness(): RepositoryReadiness {
+  return {
+    repository_full_name: 'angular/angular',
+    repository_html_url: 'https://github.com/angular/angular',
+    evaluated_at: '2026-09-01T00:00:00Z',
+    overall_score: 82,
+    coverage_percentage: 100,
+    confidence: 'high',
+    formula_version: '1.0.0',
+    dimensions: [],
+    warnings: [],
   };
 }

@@ -11,6 +11,11 @@ from openpath_api.integrations.github.errors import (
     GitHubUnavailable,
 )
 from openpath_api.schemas.repository import RepositoryPreviewRequest, RepositoryPreviewResponse
+from openpath_api.schemas.readiness import (
+    RepositoryReadinessRequest,
+    RepositoryReadinessResponse,
+)
+from openpath_api.services.readiness_analysis_service import ReadinessAnalysisService
 from openpath_api.services.repository_preview_service import RepositoryPreviewService
 
 router = APIRouter(prefix="/repositories", tags=["repositories"])
@@ -30,6 +35,39 @@ async def preview_repository(
 
     try:
         return await service.preview(request.repository_url)
+    except InvalidRepositoryUrl as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except GitHubRepositoryNotFound as exc:
+        raise HTTPException(
+            status_code=404,
+            detail="The repository was not found or is not publicly accessible.",
+        ) from exc
+    except GitHubRateLimited as exc:
+        raise HTTPException(
+            status_code=429,
+            detail="GitHub's request limit has been reached. Try again later.",
+        ) from exc
+    except GitHubUnavailable as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="GitHub is temporarily unavailable. Try again later.",
+        ) from exc
+
+
+@router.post(
+    "/readiness",
+    response_model=RepositoryReadinessResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Analyze contribution readiness for a public GitHub repository",
+)
+async def analyze_repository_readiness(
+    request: RepositoryReadinessRequest,
+    github_client: GitHubClient = Depends(get_github_client),
+) -> RepositoryReadinessResponse:
+    service = ReadinessAnalysisService(github_client)
+
+    try:
+        return await service.analyze(request.repository_url)
     except InvalidRepositoryUrl as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except GitHubRepositoryNotFound as exc:

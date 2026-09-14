@@ -1,11 +1,11 @@
 <section class="repository-panel" aria-labelledby="repository-title">
-  <p class="section-label">Phase 2 · repository preview</p>
-  <h2 id="repository-title">Inspect a public GitHub repository</h2>
+  <p class="section-label">Phase 3 · contribution readiness</p>
+  <h2 id="repository-title">Assess a public GitHub repository</h2>
   <p class="section-copy">
     Paste the repository homepage—not an issue, pull request, or source-file URL.
   </p>
 
-  <form (ngSubmit)="submit()" novalidate>
+  <form (submit)="submit($event)" novalidate>
     <label for="repository-url">GitHub repository URL</label>
     <div class="input-row">
       <input
@@ -18,7 +18,7 @@
         aria-describedby="repository-guidance repository-error"
       />
       <button type="submit" [disabled]="state() === 'loading'">
-        {{ state() === 'loading' ? 'Inspecting…' : 'Inspect repository' }}
+        {{ state() === 'loading' ? 'Analyzing…' : 'Analyze repository' }}
       </button>
     </div>
     <p id="repository-guidance" class="guidance">
@@ -32,7 +32,9 @@
   </form>
 
   @if (state() === 'loading') {
-    <div class="feedback" role="status">Retrieving public repository metadata…</div>
+    <div class="feedback" role="status">
+      Collecting bounded GitHub evidence and calculating scores…
+    </div>
   }
 
   @if (state() === 'error') {
@@ -85,5 +87,68 @@
         </p>
       }
     </article>
+  }
+
+  @if (readiness(); as analysis) {
+    <section class="readiness-result" aria-labelledby="readiness-title">
+      <div class="score-summary">
+        <div>
+          <p class="section-label">Contribution readiness</p>
+          <h3 id="readiness-title">
+            {{
+              analysis.overall_score === null
+                ? 'Insufficient evidence'
+                : analysis.overall_score + '/100'
+            }}
+          </h3>
+        </div>
+        <dl>
+          <div>
+            <dt>Confidence</dt>
+            <dd>{{ analysis.confidence }}</dd>
+          </div>
+          <div>
+            <dt>Evidence coverage</dt>
+            <dd>{{ analysis.coverage_percentage }}%</dd>
+          </div>
+          <div>
+            <dt>Formula</dt>
+            <dd>v{{ analysis.formula_version }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      @for (warning of analysis.warnings; track warning) {
+        <p class="warning" role="note">{{ warning }}</p>
+      }
+
+      <div class="dimension-grid">
+        @for (dimension of analysis.dimensions; track dimension.key) {
+          <article class="dimension-card">
+            <div class="dimension-heading">
+              <h4>{{ dimension.title }}</h4>
+              <strong>{{ dimension.score === null ? 'N/A' : dimension.score }}</strong>
+            </div>
+            <p class="dimension-meta">
+              {{ dimension.weight }}% weight · {{ dimension.confidence }} confidence · sample
+              {{ dimension.sample_size }}
+            </p>
+            <ul>
+              @for (observation of dimension.observations; track observation) {
+                <li>{{ observation }}</li>
+              }
+            </ul>
+            @for (warning of dimension.warnings; track warning) {
+              <p class="dimension-warning">{{ warning }}</p>
+            }
+            @if (dimension.evidence_urls.length > 0) {
+              <a [href]="dimension.evidence_urls[0]" target="_blank" rel="noopener noreferrer"
+                >View supporting evidence</a
+              >
+            }
+          </article>
+        }
+      </div>
+    </section>
   }
 </section>
