@@ -1,9 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { timeout } from 'rxjs';
+import { forkJoin, timeout } from 'rxjs';
 
-import { RepositoryApiService, RepositoryPreview } from '../../core/api/repository-api.service';
+import {
+  RepositoryApiService,
+  RepositoryPreview,
+  RepositoryReadiness,
+} from '../../core/api/repository-api.service';
 
 type PreviewState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -26,9 +30,11 @@ export class RepositoryPreviewComponent {
   });
   protected readonly state = signal<PreviewState>('idle');
   protected readonly repository = signal<RepositoryPreview | null>(null);
+  protected readonly readiness = signal<RepositoryReadiness | null>(null);
   protected readonly errorMessage = signal('');
 
-  submit(): void {
+  submit(event?: Event): void {
+    event?.preventDefault();
     this.repositoryUrl.markAsTouched();
     if (this.repositoryUrl.invalid || this.state() === 'loading') {
       return;
@@ -36,14 +42,19 @@ export class RepositoryPreviewComponent {
 
     this.state.set('loading');
     this.repository.set(null);
+    this.readiness.set(null);
     this.errorMessage.set('');
 
-    this.repositoryApi
-      .preview(this.repositoryUrl.value.trim())
-      .pipe(timeout(10_000))
+    const repositoryUrl = this.repositoryUrl.value.trim();
+    forkJoin({
+      repository: this.repositoryApi.preview(repositoryUrl),
+      readiness: this.repositoryApi.analyzeReadiness(repositoryUrl),
+    })
+      .pipe(timeout(20_000))
       .subscribe({
-        next: (repository) => {
+        next: ({ repository, readiness }) => {
           this.repository.set(repository);
+          this.readiness.set(readiness);
           this.state.set('success');
         },
         error: (error: unknown) => {

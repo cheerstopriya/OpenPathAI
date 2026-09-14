@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GitHubOwnerDto(BaseModel):
@@ -37,3 +37,70 @@ class GitHubRepositoryDto(BaseModel):
     topics: list[str]
     license: GitHubLicenseDto | None = None
     pushed_at: datetime | None = None
+
+
+class GitHubCommunityFileDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    html_url: str | None = None
+
+
+class GitHubCommunityFilesDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    code_of_conduct: GitHubCommunityFileDto | None = None
+    contributing: GitHubCommunityFileDto | None = None
+    issue_template: GitHubCommunityFileDto | None = None
+    license: GitHubCommunityFileDto | None = None
+    pull_request_template: GitHubCommunityFileDto | None = None
+    readme: GitHubCommunityFileDto | None = None
+
+
+class GitHubCommunityProfileDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    health_percentage: int = Field(ge=0, le=100)
+    description: str | None = None
+    documentation: str | None = None
+    files: GitHubCommunityFilesDto
+
+
+class GitHubPullRequestDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    number: int
+    html_url: str
+    state: str
+    created_at: datetime
+    closed_at: datetime | None = None
+    merged_at: datetime | None = None
+    user: GitHubOwnerDto
+
+
+class GitHubPullRequestReviewDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int
+    html_url: str | None = None
+    state: str
+    submitted_at: datetime | None = None
+    user: GitHubOwnerDto | None = None
+
+
+class GitHubLabelDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+
+
+class GitHubIssueDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    number: int
+    html_url: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    assignee: GitHubOwnerDto | None = None
+    labels: list[GitHubLabelDto] = Field(default_factory=list)
+    pull_request: dict[str, object] | None = None

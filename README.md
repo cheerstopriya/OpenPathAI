@@ -2,11 +2,13 @@
 
 OpenPath AI helps a developer evaluate an open-source GitHub repository, find a suitable contribution issue, and create an evidence-grounded contribution plan.
 
-## Phase 1 status
+## Current status
 
 The FastAPI application foundation, health endpoint, and Angular connection-status page are implemented.
 
 Phase 2 adds a secure public GitHub repository preview. The browser sends a repository URL to FastAPI; FastAPI validates it, calls only `api.github.com`, and returns a small typed response.
+
+Phase 3 adds a transparent contribution-readiness analysis. It collects a bounded sample of public repository evidence and scores six dimensions with deterministic Python rules. Every result includes its sample size, confidence, observations, warnings, and supporting GitHub links. An LLM does not calculate or alter these scores.
 
 ## Backend quick start
 
@@ -35,6 +37,19 @@ Open:
 - API health: <http://127.0.0.1:8000/api/v1/health>
 - Interactive API documentation: <http://127.0.0.1:8000/docs>
 
+Repository endpoints:
+
+- `POST /api/v1/repositories/preview` returns validated repository metadata.
+- `POST /api/v1/repositories/readiness` returns contribution-readiness evidence and scores.
+
+Example request body:
+
+```json
+{
+  "repository_url": "https://github.com/angular/angular"
+}
+```
+
 Run tests:
 
 ```powershell
@@ -52,7 +67,7 @@ npm.cmd start
 
 Open <http://localhost:4200>. Angular calls `/api/v1/health`; the development proxy forwards that request to FastAPI on port 8000.
 
-Enter a URL such as `https://github.com/cheerstopriya/OpenPathAI` to exercise the repository-preview flow.
+Enter a URL such as `https://github.com/cheerstopriya/OpenPathAI` to exercise the preview and readiness-analysis flow.
 
 Run frontend checks:
 
@@ -73,3 +88,42 @@ HTTP GET /api/v1/health
 ```
 
 The separation is intentional: the router handles HTTP, the service owns application logic, and the schema defines the public contract.
+
+The Phase 3 flow is:
+
+```text
+Angular repository form
+  -> POST /api/v1/repositories/readiness
+  -> strict github.com repository URL parser
+  -> bounded GitHub REST adapter calls
+  -> evidence collection and PR/issue normalization
+  -> deterministic scoring formula v1.0.0
+  -> typed JSON with scores, confidence, warnings, and evidence links
+  -> Angular readiness cards
+```
+
+## Readiness formula v1.0.0
+
+The overall score is a weighted assessment of contribution readiness, not a claim about repository quality:
+
+| Dimension                   | Weight | Evidence used                                                                         |
+| --------------------------- | -----: | ------------------------------------------------------------------------------------- |
+| Maintenance activity        |    20% | Days since the latest repository push                                                 |
+| Newcomer documentation      |    20% | README, contributing guide, license, code of conduct, issue template, and PR template |
+| Review responsiveness       |    20% | Median time to first submitted review in sampled PRs                                  |
+| Contribution outcomes       |    15% | Merge ratio among sampled closed PRs                                                  |
+| Beginner issue availability |    15% | Unassigned open issues carrying recognized beginner labels                            |
+| Community participation     |    10% | Distinct PR authors and reviewers in the sample                                       |
+
+Missing evidence is represented as unavailable rather than zero. The response reports evidence coverage and re-normalizes only the available dimension weights. Low sample sizes reduce confidence and produce explicit warnings.
+
+## Retrieval and security boundaries
+
+- Only canonical `https://github.com/{owner}/{repository}` URLs are accepted.
+- The backend uses a fixed `https://api.github.com` base URL and does not follow redirects.
+- Analysis is read-only and never posts an issue comment or modifies a repository.
+- Each analysis samples at most 10 pull requests, 20 reviews per sampled PR, and 30 open issue results.
+- GitHub responses are validated into small DTOs before reaching domain logic.
+- A GitHub token is optional and must be supplied through an untracked `.env` file.
+
+The sample is intentionally bounded, so a score should be read together with its confidence, coverage, and observations. It does not prove how many people are currently working on a repository.

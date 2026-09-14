@@ -83,6 +83,36 @@ class GitHubClientTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(context.exception.reset_at, "1800000000")
 
+    async def test_collects_bounded_readiness_evidence(self) -> None:
+        requested_paths: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested_paths.append(request.url.path)
+            if request.url.path.endswith("/community/profile"):
+                return httpx.Response(200, json={"health_percentage": 80, "files": {}})
+            if request.url.path.endswith("/pulls"):
+                self.assertEqual(request.url.params["per_page"], "5")
+                return httpx.Response(200, json=[])
+            if request.url.path.endswith("/issues"):
+                self.assertEqual(request.url.params["per_page"], "7")
+                return httpx.Response(200, json=[])
+            return httpx.Response(500)
+
+        reference = RepositoryReference(owner="angular", name="angular")
+        async with httpx.AsyncClient(
+            base_url="https://api.github.com",
+            transport=httpx.MockTransport(handler),
+        ) as http_client:
+            client = GitHubClient(http_client)
+            profile = await client.get_community_profile(reference)
+            pulls = await client.list_pull_requests(reference, limit=5)
+            issues = await client.list_open_issues(reference, limit=7)
+
+        self.assertEqual(profile.health_percentage, 80)
+        self.assertEqual(pulls, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(len(requested_paths), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
