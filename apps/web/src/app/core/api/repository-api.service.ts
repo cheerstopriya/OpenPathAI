@@ -46,6 +46,23 @@ export interface RepositoryReadiness {
   warnings: string[];
 }
 
+export interface Opportunity {
+  number: number;
+  title: string;
+  html_url: string;
+  labels: string[];
+  updated_at: string;
+  fit_score: number;
+  reasons: string[];
+}
+
+export interface OpportunityList {
+  repository_full_name: string;
+  sample_size: number;
+  opportunities: Opportunity[];
+  warning: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RepositoryApiService {
   private readonly http = inject(HttpClient);
@@ -58,6 +75,12 @@ export class RepositoryApiService {
 
   analyzeReadiness(repositoryUrl: string): Observable<RepositoryReadiness> {
     return this.http.post<RepositoryReadiness>('/api/v1/repositories/readiness', {
+      repository_url: repositoryUrl,
+    });
+  }
+
+  findOpportunities(repositoryUrl: string): Observable<OpportunityList> {
+    return this.http.post<OpportunityList>('/api/v1/repositories/opportunities', {
       repository_url: repositoryUrl,
     });
   }

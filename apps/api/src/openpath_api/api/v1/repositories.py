@@ -15,6 +15,8 @@ from openpath_api.schemas.readiness import (
     RepositoryReadinessRequest,
     RepositoryReadinessResponse,
 )
+from openpath_api.schemas.opportunity import OpportunityListResponse, OpportunityRequest
+from openpath_api.services.opportunity_service import OpportunityService
 from openpath_api.services.readiness_analysis_service import ReadinessAnalysisService
 from openpath_api.services.repository_preview_service import RepositoryPreviewService
 
@@ -85,3 +87,20 @@ async def analyze_repository_readiness(
             status_code=502,
             detail="GitHub is temporarily unavailable. Try again later.",
         ) from exc
+
+
+@router.post("/opportunities", response_model=OpportunityListResponse)
+async def find_opportunities(
+    request: OpportunityRequest,
+    github_client: GitHubClient = Depends(get_github_client),
+) -> OpportunityListResponse:
+    try:
+        return await OpportunityService(github_client).find(request.repository_url)
+    except InvalidRepositoryUrl as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except GitHubRepositoryNotFound as exc:
+        raise HTTPException(status_code=404, detail="The repository was not found or is not public.") from exc
+    except GitHubRateLimited as exc:
+        raise HTTPException(status_code=429, detail="GitHub's request limit has been reached.") from exc
+    except GitHubUnavailable as exc:
+        raise HTTPException(status_code=502, detail="GitHub is temporarily unavailable.") from exc
