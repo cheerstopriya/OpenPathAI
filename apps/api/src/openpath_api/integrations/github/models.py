@@ -104,3 +104,16 @@ class GitHubIssueDto(BaseModel):
     assignee: GitHubOwnerDto | None = None
     labels: list[GitHubLabelDto] = Field(default_factory=list)
     pull_request: dict[str, object] | None = None
+
+class GitHubIssueDetailDto(GitHubIssueDto):
+    body: str | None = None
+    state: str
+    comments: int = Field(ge=0)
+    user: GitHubOwnerDto
+
+class GitHubCommentDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: int
+    body: str | None = None
+    updated_at: datetime
+    user: GitHubOwnerDto

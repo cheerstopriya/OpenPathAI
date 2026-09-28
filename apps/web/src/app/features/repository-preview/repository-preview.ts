@@ -5,6 +5,7 @@ import { forkJoin, timeout } from 'rxjs';
 
 import {
   RepositoryApiService,
+  Investigation,
   OpportunityList,
   RepositoryPreview,
   RepositoryReadiness,
@@ -33,6 +34,32 @@ export class RepositoryPreviewComponent {
   protected readonly repository = signal<RepositoryPreview | null>(null);
   protected readonly readiness = signal<RepositoryReadiness | null>(null);
   protected readonly opportunities = signal<OpportunityList | null>(null);
+  protected readonly investigation = signal<Investigation | null>(null);
+  protected readonly investigationLoading = signal(false);
+  protected readonly investigationError = signal('');
+  private requestVersion = 0;
+
+  investigate(issueNumber: number): void {
+    const repository = this.repository();
+    if (!repository || this.investigationLoading()) return;
+    const version = ++this.requestVersion;
+    this.investigation.set(null);
+    this.investigationError.set('');
+    this.investigationLoading.set(true);
+    this.repositoryApi.investigate(repository.html_url, issueNumber).pipe(timeout(20_000)).subscribe({
+      next: brief => {
+        if (version !== this.requestVersion) return;
+        this.investigation.set(brief);
+        this.investigationLoading.set(false);
+      },
+      error: (error: unknown) => {
+        if (version !== this.requestVersion) return;
+        this.investigationError.set(this.toSafeMessage(error));
+        this.investigationLoading.set(false);
+      },
+    });
+  }
+
   protected readonly errorMessage = signal('');
 
   submit(event?: Event): void {
@@ -42,6 +69,10 @@ export class RepositoryPreviewComponent {
       return;
     }
 
+    this.requestVersion++;
+    this.investigation.set(null);
+    this.investigationLoading.set(false);
+    this.investigationError.set('');
     this.state.set('loading');
     this.repository.set(null);
     this.readiness.set(null);

@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import {
   RepositoryApiService,
+  Investigation,
   RepositoryPreview,
   RepositoryReadiness,
   OpportunityList,
@@ -12,6 +13,14 @@ import { RepositoryPreviewComponent } from './repository-preview';
 describe('RepositoryPreviewComponent', () => {
   let fixture: ComponentFixture<RepositoryPreviewComponent>;
   let previewCalls: string[];
+  let briefResponse: Subject<Investigation>;
+  const brief: Investigation = {
+    repository_full_name: 'angular/angular', issue_number: 1, issue_title: 'Example issue',
+    issue_state: 'open', fetched_at: '2026-09-28T00:00:00Z', generation_mode: 'deterministic',
+    evidence: [{id: 'issue', kind: 'issue', source_url: 'https://github.com/angular/angular/issues/1',
+      text: '<script>alert(1)</script>', updated_at: null, truncated: false}],
+    steps: [{instruction: 'Read the issue', evidence_ids: ['issue']}], warnings: ['Limited sample'],
+  };
 
   const repository: RepositoryPreview = {
     owner: 'angular',
@@ -72,6 +81,7 @@ describe('RepositoryPreviewComponent', () => {
 
   beforeEach(async () => {
     previewCalls = [];
+    briefResponse = new Subject<Investigation>();
     await TestBed.configureTestingModule({
       imports: [RepositoryPreviewComponent],
       providers: [
@@ -84,6 +94,7 @@ describe('RepositoryPreviewComponent', () => {
             },
             analyzeReadiness: () => of(readiness),
             findOpportunities: () => of(opportunities),
+            investigate: () => briefResponse,
           },
         },
       ],
@@ -126,5 +137,28 @@ describe('RepositoryPreviewComponent', () => {
     expect(wasNotCancelled).toBe(false);
     expect(submitEvent.defaultPrevented).toBe(true);
     expect(previewCalls).toEqual(['https://github.com/angular/angular']);
+  });
+  it('renders investigation evidence as text with source links', () => {
+    fixture.componentInstance.repositoryUrl.setValue('https://github.com/angular/angular');
+    fixture.componentInstance.submit();
+    fixture.componentInstance.investigate(1);
+    briefResponse.next(brief);
+    briefResponse.complete();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Investigation: #1');
+    expect(fixture.nativeElement.textContent).toContain('<script>alert(1)</script>');
+    expect(fixture.nativeElement.querySelector('script')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Limited sample');
+  });
+
+  it('ignores an old investigation response after another repository submission', () => {
+    fixture.componentInstance.repositoryUrl.setValue('https://github.com/angular/angular');
+    fixture.componentInstance.submit();
+    fixture.componentInstance.investigate(1);
+    fixture.componentInstance.submit();
+    briefResponse.next(brief);
+    briefResponse.complete();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Investigation: #1');
   });
 });

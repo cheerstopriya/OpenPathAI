@@ -63,9 +63,27 @@ export interface OpportunityList {
   warning: string | null;
 }
 
+export interface Investigation {
+  repository_full_name: string;
+  issue_number: number;
+  issue_title: string;
+  issue_state: string;
+  fetched_at: string;
+  evidence: { id: string; kind: string; source_url: string; text: string; updated_at: string | null; truncated: boolean }[];
+  steps: { instruction: string; evidence_ids: string[] }[];
+  warnings: string[];
+  generation_mode: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class RepositoryApiService {
   private readonly http = inject(HttpClient);
+
+  investigate(repositoryUrl: string, issueNumber: number): Observable<Investigation> {
+    return this.http.post<Investigation>('/api/v1/repositories/investigation', {
+      repository_url: repositoryUrl, issue_number: issueNumber,
+    });
+  }
 
   preview(repositoryUrl: string): Observable<RepositoryPreview> {
     return this.http.post<RepositoryPreview>('/api/v1/repositories/preview', {

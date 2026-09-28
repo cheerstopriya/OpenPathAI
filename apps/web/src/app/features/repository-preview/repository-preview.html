@@ -1,5 +1,5 @@
 <section class="repository-panel" aria-labelledby="repository-title">
-  <p class="section-label">Phase 3 · contribution readiness</p>
+  <p class="section-label">Contribution discovery</p>
   <h2 id="repository-title">Assess a public GitHub repository</h2>
   <p class="section-copy">
     Paste the repository homepage—not an issue, pull request, or source-file URL.
@@ -169,6 +169,9 @@
               <h4>#{{ opportunity.number }} · {{ opportunity.title }}</h4>
               <strong>{{ opportunity.fit_score }}</strong>
             </div>
+            <button type="button" (click)="investigate(opportunity.number)" [disabled]="investigationLoading()">
+              Investigate issue #{{ opportunity.number }}
+            </button>
             <p class="dimension-meta">Contribution fit score</p>
             <p class="labels">{{ opportunity.labels.join(' · ') || 'No labels' }}</p>
             <ul>
@@ -182,6 +185,34 @@
           </article>
         }
       </div>
+    </section>
+  }
+  @if (investigationLoading()) {
+    <p role="status">Collecting issue evidence…</p>
+  }
+  @if (investigationError()) {
+    <p role="alert">{{ investigationError() }}</p>
+  }
+  @if (investigation(); as brief) {
+    <section aria-labelledby="investigation-title" class="readiness-result">
+      <h3 id="investigation-title">Investigation: #{{ brief.issue_number }} · {{ brief.issue_title }}</h3>
+      <p>Issue {{ brief.issue_state }} · Evidence collected {{ brief.fetched_at }}</p>
+      @for (warning of brief.warnings; track warning) { <p class="warning">{{ warning }}</p> }
+      <h4>Suggested next steps</h4>
+      <ol>
+        @for (step of brief.steps; track step.instruction) {
+          <li>{{ step.instruction }} <small>Sources: {{ step.evidence_ids.join(', ') }}</small></li>
+        }
+      </ol>
+      <h4>Inspect the evidence</h4>
+      @for (source of brief.evidence; track source.id) {
+        <details>
+          <summary>{{ source.id }} · {{ source.kind }}</summary>
+          <p style="white-space: pre-wrap; overflow-wrap: anywhere">{{ source.text }}</p>
+          @if (source.truncated) { <p>Excerpt truncated.</p> }
+          <a [href]="source.source_url" target="_blank" rel="noopener noreferrer">Open original source</a>
+        </details>
+      }
     </section>
   }
 </section>

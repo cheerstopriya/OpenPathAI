@@ -12,6 +12,8 @@ from openpath_api.integrations.github.errors import (
 from openpath_api.integrations.github.models import (
     GitHubCommunityProfileDto,
     GitHubIssueDto,
+    GitHubIssueDetailDto,
+    GitHubCommentDto,
     GitHubPullRequestDto,
     GitHubPullRequestReviewDto,
     GitHubRepositoryDto,
@@ -62,6 +64,17 @@ class GitHubClient:
             params={"state": "open", "sort": "updated", "direction": "desc", "per_page": limit},
         )
         return self._validate_list(GitHubIssueDto, payload)
+
+    async def get_issue(self, reference: RepositoryReference, number: int) -> GitHubIssueDetailDto:
+        payload = await self._get(f"/repos/{reference.owner}/{reference.name}/issues/{number}")
+        return self._validate(GitHubIssueDetailDto, payload)
+
+    async def list_issue_comments(self, reference: RepositoryReference, number: int) -> list[GitHubCommentDto]:
+        payload = await self._get(
+            f"/repos/{reference.owner}/{reference.name}/issues/{number}/comments",
+            params={"per_page": 10},
+        )
+        return self._validate_list(GitHubCommentDto, payload)[:10]
 
     async def _get(self, path: str, *, params: dict[str, str | int] | None = None) -> object:
         try:

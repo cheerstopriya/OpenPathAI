@@ -20,6 +20,9 @@ from openpath_api.services.opportunity_service import OpportunityService
 from openpath_api.services.readiness_analysis_service import ReadinessAnalysisService
 from openpath_api.services.repository_preview_service import RepositoryPreviewService
 
+from openpath_api.schemas.investigation import InvestigationRequest, InvestigationResponse
+from openpath_api.services.investigation_service import InvestigationService
+
 router = APIRouter(prefix="/repositories", tags=["repositories"])
 
 
@@ -100,6 +103,21 @@ async def find_opportunities(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except GitHubRepositoryNotFound as exc:
         raise HTTPException(status_code=404, detail="The repository was not found or is not public.") from exc
+    except GitHubRateLimited as exc:
+        raise HTTPException(status_code=429, detail="GitHub's request limit has been reached.") from exc
+    except GitHubUnavailable as exc:
+        raise HTTPException(status_code=502, detail="GitHub is temporarily unavailable.") from exc
+
+
+@router.post("/investigation", response_model=InvestigationResponse)
+async def investigate_issue(request: InvestigationRequest,
+                            github_client: GitHubClient = Depends(get_github_client)):
+    try:
+        return await InvestigationService(github_client).investigate(request.repository_url, request.issue_number)
+    except (InvalidRepositoryUrl, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except GitHubRepositoryNotFound as exc:
+        raise HTTPException(status_code=404, detail="The public repository or issue was not found.") from exc
     except GitHubRateLimited as exc:
         raise HTTPException(status_code=429, detail="GitHub's request limit has been reached.") from exc
     except GitHubUnavailable as exc:

@@ -127,3 +127,23 @@ Missing evidence is represented as unavailable rather than zero. The response re
 - A GitHub token is optional and must be supplied through an untracked `.env` file.
 
 The sample is intentionally bounded, so a score should be read together with its confidence, coverage, and observations. It does not prove how many people are currently working on a repository.
+
+
+## Issue investigation
+
+Select **Investigate issue** on an opportunity card. OpenPath collects the issue
+description, author, labels, up to ten comments and repository guidance links,
+then presents source-linked investigation steps. Expand each evidence item to
+inspect its text and open the original source. Collection time, truncation and
+missing-evidence warnings are visible; this is a sampled snapshot, not live truth.
+
+`POST /api/v1/repositories/investigation` accepts:
+
+```json
+{"repository_url": "https://github.com/owner/repository", "issue_number": 1}
+```
+
+This phase is deterministic evidence collection and planning. It does not claim
+LLM generation, source-code diagnosis or measured RAG improvements. Read the
+[implementation evidence map](docs/resume-claims.md) before using project claims.
+Repository text is displayed as escaped text and is never executed as instructions.
